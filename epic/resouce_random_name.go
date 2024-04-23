@@ -1,13 +1,22 @@
 package epic
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/rand"
+	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
+
+type TitleData struct {
+	Title string   `json:"title"`
+	Names []string `json:"names"`
+}
 
 func resourceRandomName() *schema.Resource {
 	return &schema.Resource{
@@ -35,51 +44,49 @@ func resourceRandomName() *schema.Resource {
 				Description: "The randomly generated name.",
 			},
 		},
+		CustomizeDiff: customValidateMediaTypeAndTitle,
 	}
+}
+
+func loadNames(mediaType, title string) ([]string, error) {
+	sanitizedTitle := strings.ReplaceAll(title, " ", "_")
+	fileName := fmt.Sprintf("%s.json", sanitizedTitle)
+	filePath := filepath.Join("data", mediaType, fileName)
+
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read %s: %v", filePath, err)
+	}
+
+	var titleData TitleData
+	if err := json.Unmarshal(data, &titleData); err != nil {
+		return nil, fmt.Errorf("failed to parse names from %s: %v", filePath, err)
+	}
+
+	return titleData.Names, nil
 }
 
 func resourceRandomNameCreate(d *schema.ResourceData, m interface{}) error {
 	mediaType := d.Get("media_type").(string)
 	title := d.Get("title").(string)
 
-	rand.Seed(time.Now().UnixNano())
-	var names []string
-
-	switch mediaType {
-	case "movie":
-		names = getNamesForMovie(title)
-	case "tv_series":
-		names = getNamesForTVSeries(title)
-	default:
-		return fmt.Errorf("unsupported media type: %s", mediaType)
+	names, err := loadNames(mediaType, title)
+	if err != nil {
+		return fmt.Errorf("error loading names for %s '%s': %s", mediaType, title, err)
 	}
 
-	selectedName := names[rand.Intn(len(names))]
+	if len(names) == 0 {
+		return fmt.Errorf("no names found for %s '%s'", mediaType, title)
+	}
 
+	// Setup a local random source
+	source := rand.NewSource(time.Now().UnixNano())
+	localRand := rand.New(source)
+	selectedName := names[localRand.Intn(len(names))]
+
+	// Set the resource ID and the computed name
 	d.SetId(strconv.FormatInt(time.Now().UnixNano(), 10))
 	d.Set("name", selectedName)
 
 	return nil
-}
-
-func getNamesForMovie(title string) []string {
-	// Placeholder: return a slice of names based on the movie title
-	// Example implementation
-	switch title {
-	case "lord of the rings":
-		return []string{"Aragorn", "Gandalf", "Bilbo", "Frodo", "Legolas"}
-	default:
-		return []string{"John Doe"}
-	}
-}
-
-func getNamesForTVSeries(title string) []string {
-	// Placeholder: return a slice of names based on the TV series title
-	// Example implementation
-	switch title {
-	case "game of thrones":
-		return []string{"Jon Snow", "Tyrion Lannister", "Daenerys Targaryen"}
-	default:
-		return []string{"Jane Doe"}
-	}
 }

@@ -1,0 +1,4 @@
+
+# Validate validate_data.go validCombinations matches the structure of /data
+# Validate .json files under /data/* are formatted as expected
+# replace spaces with _ and validate file contents are valid json syntax
