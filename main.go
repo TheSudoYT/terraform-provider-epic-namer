@@ -1,7 +1,8 @@
 package main
 
 import (
-	"github.com/TheSudoYT/terraform-provider-epic-namer/epic"
+	"terraform-provider-epic-namer/epic"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 )
 
