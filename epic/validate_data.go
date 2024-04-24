@@ -24,6 +24,15 @@ type MediaTypeData struct {
 	Names []string `json:"names"`
 }
 
+// FOR TESTING ONLY!!
+func getDataDirPath() string {
+	dataDir := os.Getenv("DATA_DIR") // Set to "../data" for go tests
+	if dataDir == "" {
+		dataDir = "data" // Default is "data" because that is what is required for users consuming the provider
+	}
+	return dataDir
+}
+
 // LoadMediaTypes scans the specified dataDir directory, reads each subdirectory as a media type,
 // and loads each JSON file in those subdirectories as titles of that media type.
 func LoadMediaTypes(dataDir string) (map[string]map[string][]string, error) {

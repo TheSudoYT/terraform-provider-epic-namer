@@ -13,15 +13,15 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-type TitleData struct {
-	Title string   `json:"title"`
-	Names []string `json:"names"`
+type QuoteData struct {
+	Title  string   `json:"title"`
+	Quotes []string `json:"quotes"`
 }
 
-func resourceRandomName() *schema.Resource {
+func resourceRandomQuote() *schema.Resource {
 	return &schema.Resource{
-		Description: "Generates a random character name based on the media type and title specified.",
-		Create:      resourceRandomNameCreate,
+		Description: "Generates a random quote based on the media type and title specified.",
+		Create:      resourceRandomQuoteCreate,
 		Read:        schema.Noop,
 		Delete:      schema.RemoveFromState,
 
@@ -36,19 +36,19 @@ func resourceRandomName() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "The title of the media to base the name generation on.",
+				Description: "The title of the media to base the quote generation on.",
 			},
-			"name": {
+			"quote": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The randomly generated name.",
+				Description: "The randomly generated quote.",
 			},
 		},
 		CustomizeDiff: customValidateMediaTypeAndTitle,
 	}
 }
 
-func loadNames(mediaType, title string) ([]string, error) {
+func loadQuotes(mediaType, title string) ([]string, error) {
 	sanitizedTitle := strings.ReplaceAll(title, " ", "_")
 	fileName := fmt.Sprintf("%s.json", sanitizedTitle)
 	dataDirPath := filepath.FromSlash(getDataDirPath())
@@ -59,35 +59,35 @@ func loadNames(mediaType, title string) ([]string, error) {
 		return nil, fmt.Errorf("failed to read %s: %v", filePath, err)
 	}
 
-	var titleData TitleData
-	if err := json.Unmarshal(data, &titleData); err != nil {
-		return nil, fmt.Errorf("failed to parse names from %s: %v", filePath, err)
+	var quoteData QuoteData
+	if err := json.Unmarshal(data, &quoteData); err != nil {
+		return nil, fmt.Errorf("failed to parse quotes from %s: %v", filePath, err)
 	}
 
-	return titleData.Names, nil
+	return quoteData.Quotes, nil
 }
 
-func resourceRandomNameCreate(d *schema.ResourceData, m interface{}) error {
+func resourceRandomQuoteCreate(d *schema.ResourceData, m interface{}) error {
 	mediaType := d.Get("media_type").(string)
 	title := d.Get("title").(string)
 
-	names, err := loadNames(mediaType, title)
+	quotes, err := loadQuotes(mediaType, title)
 	if err != nil {
-		return fmt.Errorf("error loading names for %s '%s': %s", mediaType, title, err)
+		return fmt.Errorf("error loading quotes for %s '%s': %s", mediaType, title, err)
 	}
 
-	if len(names) == 0 {
-		return fmt.Errorf("no names found for %s '%s'", mediaType, title)
+	if len(quotes) == 0 {
+		return fmt.Errorf("no quotes found for %s '%s'", mediaType, title)
 	}
 
 	// Setup a local random source
 	source := rand.NewSource(time.Now().UnixNano())
 	localRand := rand.New(source)
-	selectedName := names[localRand.Intn(len(names))]
+	selectedQuote := quotes[localRand.Intn(len(quotes))]
 
-	// Set the resource ID and the computed name
+	// Set the resource ID and the computed quote
 	d.SetId(strconv.FormatInt(time.Now().UnixNano(), 10))
-	d.Set("name", selectedName)
+	d.Set("quote", selectedQuote)
 
 	return nil
 }
