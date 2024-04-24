@@ -48,10 +48,20 @@ func resourceRandomName() *schema.Resource {
 	}
 }
 
+// FOR TESTING ONLY!!
+func getDataDirPath() string {
+	dataDir := os.Getenv("DATA_DIR") // Set to "../data" for go tests
+	if dataDir == "" {
+		dataDir = "data" // Default is "data" because that is what is required for users consuming the provider
+	}
+	return dataDir
+}
+
 func loadNames(mediaType, title string) ([]string, error) {
 	sanitizedTitle := strings.ReplaceAll(title, " ", "_")
 	fileName := fmt.Sprintf("%s.json", sanitizedTitle)
-	filePath := filepath.Join("data", mediaType, fileName)
+	dataDirPath := filepath.FromSlash(getDataDirPath())
+	filePath := filepath.Join(dataDirPath, mediaType, fileName)
 
 	data, err := os.ReadFile(filePath)
 	if err != nil {

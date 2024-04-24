@@ -11,6 +11,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+// validate_data.go ensures that the map of media_types to titles is cached during the plan.
+// I'm not actually sure if this carries over to the apply?
+// It also validates that the media_types in the /data directory contain a title provided as an input.
+
 var mediaTypeCache map[string]map[string][]string
 var cacheLoaded bool
 
@@ -23,11 +27,13 @@ type MediaTypeData struct {
 // LoadMediaTypes scans the specified dataDir directory, reads each subdirectory as a media type,
 // and loads each JSON file in those subdirectories as titles of that media type.
 func LoadMediaTypes(dataDir string) (map[string]map[string][]string, error) {
+
 	// This map will hold the media type as key and a map of titles with their names as value.
 	mediaTypes := make(map[string]map[string][]string)
 
 	// Read the main data directory.
-	entries, err := os.ReadDir(dataDir)
+	dataDirPath := filepath.FromSlash(dataDir)
+	entries, err := os.ReadDir(dataDirPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read data directory: %v", err)
 	}
@@ -36,7 +42,7 @@ func LoadMediaTypes(dataDir string) (map[string]map[string][]string, error) {
 	for _, entry := range entries {
 		if entry.IsDir() {
 			mediaType := entry.Name()
-			mediaPath := filepath.Join(dataDir, mediaType)
+			mediaPath := filepath.Join(dataDirPath, mediaType)
 			mediaTypeMap := make(map[string][]string)
 
 			// Read files within the media type directory.
@@ -59,6 +65,7 @@ func LoadMediaTypes(dataDir string) (map[string]map[string][]string, error) {
 					}
 
 					// Use the title from the JSON or the filename without extension as a fallback.
+					// I actually don't know if this will cause unexpected outcomes for users? We shall see.
 					title := mediaData.Title
 					if title == "" {
 						title = strings.TrimSuffix(file.Name(), ".json")
@@ -79,6 +86,7 @@ func LoadMediaTypes(dataDir string) (map[string]map[string][]string, error) {
 	return mediaTypes, nil
 }
 
+// Function to load media_type to title mapping from cache if the cache is not considered loaded already.
 func LoadAndCacheMediaTypes(dataDir string) error {
 	if !cacheLoaded {
 		var err error
@@ -91,35 +99,39 @@ func LoadAndCacheMediaTypes(dataDir string) error {
 	return nil
 }
 
+// Function called by customizeDiff: during resource creation
 func customValidateMediaTypeAndTitle(ctx context.Context, diff *schema.ResourceDiff, v interface{}) error {
 	mediaType := diff.Get("media_type").(string)
 	title := diff.Get("title").(string)
 
-	if !isValidMediaTypeAndTitle(mediaType, title) {
-		return fmt.Errorf("'%s' is not a valid title for media type '%s'", title, mediaType)
+	isValid, errMsg := isValidMediaTypeAndTitle(mediaType, title)
+	if !isValid {
+		return fmt.Errorf(errMsg)
 	}
 
 	return nil
 }
 
-func isValidMediaTypeAndTitle(mediaType, title string) bool {
+// Function to validate that the user provided media_type and title are valid or not
+func isValidMediaTypeAndTitle(mediaType, title string) (bool, string) {
 	if !cacheLoaded {
 		if err := LoadAndCacheMediaTypes("data"); err != nil {
-			fmt.Printf("Error loading media types: %v\n", err)
-			return false
+			return false, fmt.Sprintf("error loading media types: %v", err)
 		}
 	}
 
+	// Check if the media_type is valid
 	titlesMap, ok := mediaTypeCache[mediaType]
 	if !ok {
-		return false
+		return false, fmt.Sprintf("'%s' is not a recognized media type", mediaType)
 	}
 
+	// Check if the title is valid for the given media_type
 	for t := range titlesMap {
 		if strings.EqualFold(t, title) {
-			return true
+			return true, ""
 		}
 	}
 
-	return false
+	return false, fmt.Sprintf("'%s' is not a valid title for media type '%s'", title, mediaType)
 }
