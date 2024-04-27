@@ -33,8 +33,6 @@ jobs:
           echo "${{ steps.script_output.outputs.result }}" >> docs/index.md
 
       - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.ref_name }}
       - name: Git push docs/index.md with media type and title mapping
         run: |
             git config --global user.name "${{ vars.TF_THESUDO_CI_COMMIT_AUTHOR }}"
