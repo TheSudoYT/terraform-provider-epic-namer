@@ -1,4 +1,43 @@
-
-# Validate validate_data.go validCombinations matches the structure of /data
 # Validate .json files under /data/* are formatted as expected
 # replace spaces with _ and validate file contents are valid json syntax
+
+name: Validate JSON Data Files
+
+on:
+  push:
+    paths:
+      - 'data/**'
+  pull_request:
+    paths:
+      - 'data/**'
+
+jobs:
+  validate_json:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install JSON validation tool
+        run: pip install jsonschema
+
+      - name: Validate JSON Files
+        run: |
+          find data -type f -name '*.json' | while read file; do
+            # Check file name format (all lowercase and no spaces)
+            if [[ ! "$file" =~ ^data/[a-zA-Z0-9_]+/[a-z0-9_]+\.json$ ]]; then
+              echo "File name format error: $file"
+              exit 1
+            fi
+            # Check JSON syntax
+            python -m json.tool "$file" > /dev/null
+            if [ $? -ne 0 ]; then
+              echo "JSON syntax error in file: $file"
+              exit 1
+            fi
+          done
