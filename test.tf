@@ -2,7 +2,7 @@ terraform {
   required_providers {
     epic = {
       version = "0.1.0"
-      source  = "localhost/providers/epic-namer"
+      source  = "localhost/providers/epic"
     }
     aws = {
       source  = "hashicorp/aws"

@@ -1,4 +1,4 @@
-module terraform-provider-epic-namer
+module terraform-provider-epic
 
 go 1.22
 
