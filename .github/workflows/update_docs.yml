@@ -45,8 +45,15 @@ jobs:
             git add docs/index.md
             git status
             git diff-index --quiet HEAD || git commit -m "Update docs/index.md"
-            git commit -a -m "Update docs/index.md"
-            BRANCH_NAME=${GITHUB_REF#refs/heads/}
+            # Determine if this is a PR and extract branch name
+            if [[ "$GITHUB_REF" =~ pull\/([0-9]+)\/merge ]]; then
+              # Extract actual branch name for PRs
+              PR_NUMBER=${BASH_REMATCH[1]}
+              BRANCH_NAME=$(jq --raw-output .pull_request.head.ref $GITHUB_EVENT_PATH)
+            else
+              # Extract branch name from GITHUB_REF for normal pushes
+              BRANCH_NAME=${GITHUB_REF#refs/heads/}
+            fi
             git push origin HEAD:$BRANCH_NAME
         env:
             GITHUB_TOKEN: ${{ secrets.TF_THESUDO_COMMIT_GITHUB_TOKEN }}
