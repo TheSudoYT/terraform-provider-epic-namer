@@ -27,6 +27,7 @@ Titles:
 
 Media Type: movie
 Titles:
+  - jurassic_park
   - lord_of_the_rings
   - star_wars
 
