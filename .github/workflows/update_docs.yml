@@ -12,7 +12,7 @@ jobs:
   update_docs:
     runs-on: ubuntu-latest
     outputs:
-        fav-number: ${{ steps.script_output.SCRIPT_OUPUT }}
+        script_output: ${{ steps.script_output.outputs.SCRIPT_OUTPUT }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -32,7 +32,7 @@ jobs:
       - name: Append output to docs/index.md
         run: |
           echo -e "\n# epic Provider\n$(cat docs/index.md)" > docs/index.md
-          echo "${{ steps.script_output.outputs.SCRIPT_OUPUT }}" >> docs/index.md
+          echo "${{ steps.script_output.outputs.SCRIPT_OUTPUT }}" >> docs/index.md
 
       - uses: actions/checkout@v3
       - name: Git push docs/index.md with media type and title mapping
