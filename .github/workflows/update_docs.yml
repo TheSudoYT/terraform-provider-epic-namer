@@ -30,7 +30,7 @@ jobs:
       - name: Append output to docs/index.md
         run: |
           echo -e "\n# epic Provider\n$(cat docs/index.md)" > docs/index.md
-          echo "${{ steps.script_output.outputs.stdout }}" >> docs/index.md
+          echo "${{ steps.script_output.outputs }}" >> docs/index.md
 
       - uses: actions/checkout@v3
       - name: Git push docs/index.md with media type and title mapping
