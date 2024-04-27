@@ -40,5 +40,6 @@ Media Type: video_game
 Titles:
   - final_fantasy_vii
   - kingdom_hearts_1
+  - the_witcher
 
 All Media Types: anime movie tv_series video_game 
