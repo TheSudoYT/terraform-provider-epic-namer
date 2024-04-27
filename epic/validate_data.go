@@ -26,9 +26,9 @@ type MediaTypeData struct {
 
 // FOR TESTING ONLY!!
 func getDataDirPath() string {
-	dataDir := os.Getenv("DATA_DIR") // Set to "../data" for go tests
+	dataDir := os.Getenv("DATA_DIR") // Set to "../data" for go tests.
 	if dataDir == "" {
-		dataDir = "data" // Default is "data" because that is what is required for users consuming the provider
+		dataDir = "data" // Default is "data" because that is what is required for users consuming the provider.
 	}
 	return dataDir
 }
@@ -108,10 +108,17 @@ func LoadAndCacheMediaTypes(dataDir string) error {
 	return nil
 }
 
-// Function called by customizeDiff: during resource creation
+// Function called by customizeDiff: during resource creation.
 func customValidateMediaTypeAndTitle(ctx context.Context, diff *schema.ResourceDiff, v interface{}) error {
-	mediaType := diff.Get("media_type").(string)
-	title := diff.Get("title").(string)
+	mediaType, ok := diff.Get("media_type").(string)
+	if !ok {
+		fmt.Println("Expceted a media type. Found none")
+	}
+
+	title, ok := diff.Get("title").(string)
+	if !ok {
+		fmt.Println("Expceted a title. Found none")
+	}
 
 	isValid, errMsg := isValidMediaTypeAndTitle(mediaType, title)
 	if !isValid {
@@ -121,7 +128,7 @@ func customValidateMediaTypeAndTitle(ctx context.Context, diff *schema.ResourceD
 	return nil
 }
 
-// Function to validate that the user provided media_type and title are valid or not
+// Function to validate that the user provided media_type and title are valid or not.
 func isValidMediaTypeAndTitle(mediaType, title string) (bool, string) {
 	if !cacheLoaded {
 		if err := LoadAndCacheMediaTypes("data"); err != nil {
@@ -129,13 +136,13 @@ func isValidMediaTypeAndTitle(mediaType, title string) (bool, string) {
 		}
 	}
 
-	// Check if the media_type is valid
+	// Check if the media_type is valid.
 	titlesMap, ok := mediaTypeCache[mediaType]
 	if !ok {
 		return false, fmt.Sprintf("'%s' is not a recognized media type", mediaType)
 	}
 
-	// Check if the title is valid for the given media_type
+	// Check if the title is valid for the given media_type.
 	for t := range titlesMap {
 		if strings.EqualFold(t, title) {
 			return true, ""

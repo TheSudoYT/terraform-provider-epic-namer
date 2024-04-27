@@ -3,6 +3,7 @@ package epic
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -68,8 +69,15 @@ func loadNames(mediaType, title string) ([]string, error) {
 }
 
 func resourceRandomNameCreate(d *schema.ResourceData, m interface{}) error {
-	mediaType := d.Get("media_type").(string)
-	title := d.Get("title").(string)
+	mediaType, ok := d.Get("media_type").(string)
+	if !ok {
+		fmt.Println("Expceted a media type. Found none")
+	}
+
+	title, ok := d.Get("title").(string)
+	if !ok {
+		fmt.Println("Expceted a title. Found none")
+	}
 
 	names, err := loadNames(mediaType, title)
 	if err != nil {
@@ -80,14 +88,17 @@ func resourceRandomNameCreate(d *schema.ResourceData, m interface{}) error {
 		return fmt.Errorf("no names found for %s '%s'", mediaType, title)
 	}
 
-	// Setup a local random source
+	// Setup a local random source.
 	source := rand.NewSource(time.Now().UnixNano())
 	localRand := rand.New(source)
 	selectedName := names[localRand.Intn(len(names))]
 
-	// Set the resource ID and the computed name
+	// Set the resource ID and the computed name.
 	d.SetId(strconv.FormatInt(time.Now().UnixNano(), 10))
-	d.Set("name", selectedName)
+
+	if err := d.Set("name", selectedName); err != nil {
+		log.Fatalf("Error setting name: %v", err)
+	}
 
 	return nil
 }

@@ -3,6 +3,7 @@ package epic
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -68,8 +69,15 @@ func loadQuotes(mediaType, title string) ([]string, error) {
 }
 
 func resourceRandomQuoteCreate(d *schema.ResourceData, m interface{}) error {
-	mediaType := d.Get("media_type").(string)
-	title := d.Get("title").(string)
+	mediaType, ok := d.Get("media_type").(string)
+	if !ok {
+		fmt.Println("Expceted a media_type. Found none")
+	}
+
+	title, ok := d.Get("title").(string)
+	if !ok {
+		fmt.Println("Expceted a title. None found.")
+	}
 
 	quotes, err := loadQuotes(mediaType, title)
 	if err != nil {
@@ -80,14 +88,17 @@ func resourceRandomQuoteCreate(d *schema.ResourceData, m interface{}) error {
 		return fmt.Errorf("no quotes found for %s '%s'", mediaType, title)
 	}
 
-	// Setup a local random source
+	// Setup a local random source.
 	source := rand.NewSource(time.Now().UnixNano())
 	localRand := rand.New(source)
 	selectedQuote := quotes[localRand.Intn(len(quotes))]
 
-	// Set the resource ID and the computed quote
+	// Set the resource ID and the computed quote.
 	d.SetId(strconv.FormatInt(time.Now().UnixNano(), 10))
-	d.Set("quote", selectedQuote)
+
+	if err := d.Set("quote", selectedQuote); err != nil {
+		log.Fatalf("Error setting quote: %v", err)
+	}
 
 	return nil
 }
