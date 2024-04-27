@@ -14,7 +14,9 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
-
+        with:
+            fetch-depth: 0
+  
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
@@ -40,6 +42,13 @@ jobs:
         run: |
             git config --global user.name "${{ vars.TF_THESUDO_CI_COMMIT_AUTHOR }}"
             git config --global user.email "${{ vars.TF_THESUDO_CI_COMMIT_EMAIL }}"
-            git add .
+            git add docs/index.md
+            git status
+            git diff-index --quiet HEAD || git commit -m "Update docs/index.md"
             git commit -a -m "Update docs/index.md"
-            git push "https://${{ vars.TF_THESUDO_CI_COMMIT_AUTHOR }}:${{ secrets.TF_THESUDO_COMMIT_GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+            BRANCH_NAME=${GITHUB_REF#refs/heads/}
+            git push origin HEAD:$BRANCH_NAME
+        env:
+            GITHUB_TOKEN: ${{ secrets.TF_THESUDO_COMMIT_GITHUB_TOKEN }}
+
+#git push "https://${{ vars.TF_THESUDO_CI_COMMIT_AUTHOR }}:${{ secrets.TF_THESUDO_COMMIT_GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
