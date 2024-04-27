@@ -26,7 +26,7 @@ jobs:
         run: go generate ./...
 
       - name: Execute build_media_map script
-        run: chmod +x ./scripts/build_media_map.sh && ./scripts/build_media_map.sh >> "$GITHUB_OUTPUT"
+        run: chmod +x ./scripts/build_media_map.sh && ./scripts/build_media_map.sh 'RESPONSE<<EOF' >> "$GITHUB_OUTPUT"
         id: script_output
 
       - name: Append output to docs/index.md
