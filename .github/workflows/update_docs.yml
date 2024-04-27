@@ -26,13 +26,15 @@ jobs:
         run: go generate ./...
 
       - name: Execute build_media_map script
-        run: chmod +x ./scripts/build_media_map.sh && ./scripts/build_media_map.sh
+        run: chmod +x ./scripts/build_media_map.sh && ./scripts/build_media_map.sh >> "$GITHUB_OUTPUT"
         id: script_output
 
       - name: Append output to docs/index.md
+        env:
+            SCRIPT_OUTPUT: ${{ steps.script_output.outputs.SCRIPT_OUTPUT }}
         run: |
           echo -e "\n# epic Provider\n$(cat docs/index.md)" > docs/index.md
-          echo "${{ steps.script_output.outputs.SCRIPT_OUTPUT }}" >> docs/index.md
+          echo $SCRIPT_OUTPUT >> docs/index.md
 
       - uses: actions/checkout@v3
       - name: Git push docs/index.md with media type and title mapping
