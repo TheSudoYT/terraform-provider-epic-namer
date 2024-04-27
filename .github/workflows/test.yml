@@ -58,7 +58,16 @@ jobs:
           - macos-latest
           - windows-latest
           - ubuntu-latest
-        terraform: ${{ fromJSON(vars.TF_VERSIONS_PROTOCOL_V6) }}
+        terraform:
+          - 1.0.x
+          - 1.1.x
+          - 1.2.x
+          - 1.3.x
+          - 1.4.x
+          - 1.5.x
+          - 1.6.x
+          - 1.7.x
+          - 1.8.x
     steps:
 
     - name: Check out code
