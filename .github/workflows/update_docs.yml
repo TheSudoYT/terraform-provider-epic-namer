@@ -29,10 +29,14 @@ jobs:
           echo -e "\n# epic Provider\n$(cat docs/index.md)" > docs/index.md
           echo "${{ steps.script_output.outputs.result }}" >> docs/index.md
 
-      - name: Commit and Push changes
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref_name }}
+            
+      - name: Git push docs/index.md with media type and title mapping
         run: |
             git config --global user.name "${{ vars.TF_THESUDO_CI_COMMIT_AUTHOR }}"
             git config --global user.email "${{ vars.TF_THESUDO_CI_COMMIT_EMAIL }}"
             git add .
-            git commit -a -m "Update changelog"
+            git commit -a -m "Update docs/index.md"
             git push "https://${{ vars.TF_THESUDO_CI_COMMIT_AUTHOR }}:${{ secrets.TF_THESUDO_COMMIT_GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
