@@ -5,13 +5,18 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+
 jobs:
   update_docs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
-
+        uses: actions/checkout@v3
+        with:
+            fetch-depth: 0
+  
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
@@ -21,18 +26,36 @@ jobs:
         run: go generate ./...
 
       - name: Execute build_media_map script
-        run: chmod +x ./scripts/build_media_map.sh && ./scripts/build_media_map.sh
         id: script_output
+        run: |
+          chmod +x ./scripts/build_media_map.sh
+          echo "SCRIPT_OUTPUT<<EOF" >> $GITHUB_ENV
+          ./scripts/build_media_map.sh >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Append output to docs/index.md
         run: |
           echo -e "\n# epic Provider\n$(cat docs/index.md)" > docs/index.md
-          echo "${{ steps.script_output.outputs.result }}" >> docs/index.md
+          echo "${{ env.SCRIPT_OUTPUT }}" >> docs/index.md
 
-      - name: Commit and Push changes
+      - name: Git push docs/index.md with media type and title mapping
         run: |
             git config --global user.name "${{ vars.TF_THESUDO_CI_COMMIT_AUTHOR }}"
             git config --global user.email "${{ vars.TF_THESUDO_CI_COMMIT_EMAIL }}"
-            git add .
-            git commit -a -m "Update changelog"
-            git push "https://${{ vars.TF_THESUDO_CI_COMMIT_AUTHOR }}:${{ secrets.TF_THESUDO_COMMIT_GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+            git add docs/index.md
+            git status
+            git diff-index --quiet HEAD || git commit -m "Update docs/index.md"
+            # Determine if this is a PR and extract branch name
+            if [[ "$GITHUB_REF" =~ pull\/([0-9]+)\/merge ]]; then
+              # Extract actual branch name for PRs
+              PR_NUMBER=${BASH_REMATCH[1]}
+              BRANCH_NAME=$(jq --raw-output .pull_request.head.ref $GITHUB_EVENT_PATH)
+            else
+              # Extract branch name from GITHUB_REF for normal pushes
+              BRANCH_NAME=${GITHUB_REF#refs/heads/}
+            fi
+            git push origin HEAD:$BRANCH_NAME
+        env:
+            GITHUB_TOKEN: ${{ secrets.TF_THESUDO_COMMIT_GITHUB_TOKEN }}
+
+#git push "https://${{ vars.TF_THESUDO_CI_COMMIT_AUTHOR }}:${{ secrets.TF_THESUDO_COMMIT_GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
