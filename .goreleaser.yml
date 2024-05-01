@@ -31,6 +31,7 @@ archives:
   - LICENSE
   - data/*
 - format: zip
+  id: provider
   name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
 checksum:
   extra_files:

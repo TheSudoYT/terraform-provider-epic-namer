@@ -7,12 +7,12 @@ on:
       - 'README.md'
       - 'CHANGELOG.md'
       - 'website/*'
-  push:
-    branches: [ main ]
-    paths-ignore:
-      - 'README.md'
-      - 'CHANGELOG.md'
-      - 'website/*'
+#   push:
+#     branches: [ main ]
+#     paths-ignore:
+#       - 'README.md'
+#       - 'CHANGELOG.md'
+#       - 'website/*'
 
 jobs:
   build:
