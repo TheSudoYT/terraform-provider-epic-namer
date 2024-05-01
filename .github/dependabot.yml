@@ -7,15 +7,15 @@ updates:
     directory: "/"
     schedule:
       # Check for updates to Go modules every weekday
-      interval: "daily"
+      interval: "weekly"
   - package-ecosystem: "gomod"
     directory: "/tools"
     schedule:
-      interval: "daily"
+      interval: "weekly"
   # Dependabot only updates hashicorp GHAs, external GHAs are managed by internal tooling (tsccr)
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
     allow:
       - dependency-name: "hashicorp/*"
